@@ -10,34 +10,52 @@ import (
 )
 
 var MainTree *widget.Tree
-var CountAdds int = 0
 
 type Tab struct {
 	Title string
-	View  func(w fyne.Window, f func()) fyne.CanvasObject
+	View  func(w fyne.Window, f func(utils.ShareMapping)) fyne.CanvasObject
 }
 
 var (
 	// Tabs defines the metadata for each tutorial
 	Tabs = map[string]Tab{
-		"welcome": {"Welcome", welcomeScreen},
+		"addShare": {"Add New Share", addShareScreen},
 	}
 
 	// TabIndex defines how our tutorials should be laid out in the index tree
 	TabIndex = map[string][]string{
-		"": {"welcome"},
+		"": {"addShare"},
 	}
 )
 
-func testScreen(_ fyne.Window, addToTutorials func()) fyne.CanvasObject {
-	return container.NewCenter(container.NewVBox(
-		widget.NewLabelWithStyle("Welcome to the test facility", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-	))
+func AddPane(shareMapping utils.ShareMapping) {
+	Tabs[shareMapping.Uuid] = Tab{
+		fmt.Sprintf("%s -> %s:", shareMapping.SharePath, shareMapping.MountLocation),
+		createShareConfigScreen(shareMapping),
+	}
+	TabIndex[""] = append(TabIndex[""], shareMapping.Uuid)
+	if MainTree != nil {
+		fmt.Println("Refreshing the Tree")
+		MainTree.Refresh()
+	}
 }
 
-func welcomeScreen(win fyne.Window, addToTutorials func()) fyne.CanvasObject {
+func createShareConfigScreen(shareMapping utils.ShareMapping) func(fyne.Window, func(utils.ShareMapping)) fyne.CanvasObject {
+	return func(_ fyne.Window, addPane func(utils.ShareMapping)) fyne.CanvasObject {
+		// return container.NewCenter(container.NewVBox(
+		// 	widget.NewLabelWithStyle("Welcome to the test facility", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		// ))
+
+		return container.NewCenter(container.NewVBox(
+			widget.NewLabel("Share Map Configuration"),
+			widget.NewLabel(fmt.Sprintf("%s -> %s:", shareMapping.SharePath, shareMapping.MountLocation)),
+		))
+	}
+}
+
+func addShareScreen(win fyne.Window, addPane func(utils.ShareMapping)) fyne.CanvasObject {
+	sharePath := widget.NewEntry()
 	mountLocation := widget.NewEntry()
-	mountDrive := widget.NewEntry()
 
 	roUser := widget.NewEntry()
 	rwUser := widget.NewEntry()
@@ -45,8 +63,8 @@ func welcomeScreen(win fyne.Window, addToTutorials func()) fyne.CanvasObject {
 	rwPass := widget.NewPasswordEntry()
 
 	form := widget.NewForm(
-		widget.NewFormItem("Mount Location", mountLocation),
-		widget.NewFormItem("Drive Letter", mountDrive),
+		widget.NewFormItem("Share Path", sharePath),
+		widget.NewFormItem("Drive Letter", mountLocation),
 		widget.NewFormItem("User(Read-Only)", roUser),
 		widget.NewFormItem("Pass(Read-Only)", roPass),
 		widget.NewFormItem("User(Read-Write)", rwUser),
@@ -54,21 +72,37 @@ func welcomeScreen(win fyne.Window, addToTutorials func()) fyne.CanvasObject {
 	)
 	form.OnSubmit = func() {
 		fmt.Println("Form submitted")
-		utils.SaveShareMapping(roPass.Text, rwPass.Text, mountLocation.Text, roUser.Text, rwUser.Text)
-	}
-	form.OnCancel = func() {
-		fmt.Println("Form cancelled")
+		if sharePath.Text == "" ||
+			roPass.Text == "" ||
+			rwPass.Text == "" ||
+			mountLocation.Text == "" ||
+			roUser.Text == "" ||
+			rwUser.Text == "" {
+			fmt.Println("Field invalid")
+			return
+		}
+
+		shareMapping := utils.SaveShareMapping(sharePath.Text, roUser.Text, roPass.Text, rwUser.Text, rwPass.Text, mountLocation.Text)
+		addPane(shareMapping)
+
+		sharePath.SetText("")
 		mountLocation.SetText("")
-		mountDrive.SetText("")
 
 		roUser.SetText("")
 		rwUser.SetText("")
 		roPass.SetText("")
 		rwPass.SetText("")
 	}
-	// widget.NewButton("Add new leaf Node", func() {
-	// 	addToTutorials()
-	// }),
+	form.OnCancel = func() {
+		fmt.Println("Form cancelled")
+		sharePath.SetText("")
+		mountLocation.SetText("")
+
+		roUser.SetText("")
+		rwUser.SetText("")
+		roPass.SetText("")
+		rwPass.SetText("")
+	}
 
 	return container.NewVBox(
 		widget.NewLabelWithStyle("Add a new share", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -76,20 +110,7 @@ func welcomeScreen(win fyne.Window, addToTutorials func()) fyne.CanvasObject {
 	)
 }
 
-func addToTutorials() {
-	if CountAdds == 0 {
-		fmt.Println("Updating tutorials")
-		Tabs["Added"] = Tab{"Test", testScreen}
-		TabIndex[""] = append(TabIndex[""], "Added")
-		MainTree.Refresh()
-		MainTree.ScrollTo("binding")
-		fmt.Println(Tabs)
-		fmt.Println(TabIndex)
-		CountAdds += 1
-	}
-}
-
-func makeNav(setTutorial func(tutorial Tab, addtoTutorials func()), loadPrevious bool) *widget.Tree {
+func makeNav(setContent func(tab Tab, addPane func(utils.ShareMapping))) *widget.Tree {
 	tree := widget.NewTree(
 		func(uid string) []string { // ChildUIDs
 			return TabIndex[uid]
@@ -114,11 +135,11 @@ func makeNav(setTutorial func(tutorial Tab, addtoTutorials func()), loadPrevious
 	)
 	tree.OnSelected = func(uid string) {
 		if t, ok := Tabs[uid]; ok {
-			setTutorial(t, addToTutorials)
+			setContent(t, AddPane)
 		}
 	}
-	tree.Select("welcome")
 	MainTree = tree
+	tree.Select("addShare")
 
 	return tree
 }

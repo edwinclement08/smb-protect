@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"fyne.io/fyne/v2/app"
@@ -27,6 +28,10 @@ func main() {
 		log.Fatalf("Failed to load App Configuration: %s", err)
 	}
 	AppConfig = config
+	for _, share := range config.ShareMappings {
+		fmt.Printf("Adding share %s -> %s\n", share.SharePath, share.MountLocation)
+		ui.AddPane(share)
+	}
 
 	// salt := utils.GenerateSeed()
 	// pass := "pass23"

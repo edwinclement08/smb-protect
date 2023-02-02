@@ -24,9 +24,12 @@ const (
 var LoadedConfig ConfigType
 
 type ShareMapping struct {
+	SharePath         string
 	MountLocation     string
 	MountLocationType MountLocationType
 	Uuid              string
+	ROUser            string
+	RWUser            string
 	ROCryptoSalt      string
 	ROCryptoNonce     string
 	RWCryptoSalt      string
@@ -167,15 +170,18 @@ func Base64Decode(str string) ([]byte, bool) {
 	return data, false
 }
 
-func SaveShareMapping(roPass, rwPass, mountLocation, roUser, rwUser string) {
+func SaveShareMapping(sharePath, roUser, roPass, rwUser, rwPass, mountLocation string) ShareMapping {
 	masterPass := "pass23"
 	roCipher, roNonce, roSalt := Encrypt(roPass, masterPass)
 	rwCipher, rwNonce, rwSalt := Encrypt(rwPass, masterPass)
 
 	shareMapping := ShareMapping{
+		SharePath:         sharePath,
 		MountLocation:     mountLocation,
 		MountLocationType: DriveMount,
 		Uuid:              uuid.New().String(),
+		ROUser:            roUser,
+		RWUser:            rwUser,
 		ROCryptoSalt:      Base64Encode(roSalt),
 		ROCryptoNonce:     Base64Encode(roNonce),
 		RWCryptoSalt:      Base64Encode(rwSalt),
@@ -199,4 +205,5 @@ func SaveShareMapping(roPass, rwPass, mountLocation, roUser, rwUser string) {
 	if err := SaveConfig(); err != nil {
 		fmt.Println("Error in saving Configuration")
 	}
+	return shareMapping
 }

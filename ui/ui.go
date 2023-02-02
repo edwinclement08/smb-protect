@@ -7,7 +7,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
-	"fyne.io/fyne/v2/widget"
+	"github.com/edwinclement08/smb-protect/utils"
 )
 
 func makeTray(a fyne.App) {
@@ -28,16 +28,12 @@ func SetupConfigWindow(window fyne.Window) {
 	window.Resize(fyne.Size{Width: 350, Height: 250})
 
 	content := container.NewMax()
-	title := widget.NewLabel("Component name")
-	setTutorial := func(t Tab, addToTutorials func()) {
-		title.SetText(t.Title)
-
-		content.Objects = []fyne.CanvasObject{t.View(window, addToTutorials)}
+	setContent := func(t Tab, addPane func(utils.ShareMapping)) {
+		content.Objects = []fyne.CanvasObject{t.View(window, addPane)}
 		content.Refresh()
 	}
-	// tutorial := container.NewBorder(
-	// 	container.NewVBox(title, widget.NewSeparator(), intro), nil, nil, nil, content)
-	split := container.NewHSplit(makeNav(setTutorial, true), content)
+
+	split := container.NewHSplit(makeNav(setContent), content)
 	split.Offset = 0.2
 
 	window.SetContent(split)

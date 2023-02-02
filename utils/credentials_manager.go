@@ -43,3 +43,18 @@ func ListCred() {
 		fmt.Println(creds[i].TargetName)
 	}
 }
+
+func DeleteCred(label string) error {
+	cred, err := wincred.GetGenericCredential(getTargetName(label))
+	if err != nil {
+		fmt.Printf("Failed to retrieve Credential for: %s\n", label)
+		return err
+	}
+
+	err = cred.Delete()
+	if err != nil {
+		fmt.Printf("Failed to delete Credential for: %s\n", label)
+		return err
+	}
+	return nil
+}
