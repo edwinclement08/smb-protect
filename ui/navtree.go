@@ -31,25 +31,12 @@ var (
 func AddPane(shareMapping utils.ShareMapping) {
 	Tabs[shareMapping.Uuid] = Tab{
 		fmt.Sprintf("%s -> %s:", shareMapping.SharePath, shareMapping.MountLocation),
-		createShareConfigScreen(shareMapping),
+		CreateShareConfigScreen(shareMapping),
 	}
 	TabIndex[""] = append(TabIndex[""], shareMapping.Uuid)
 	if MainTree != nil {
 		fmt.Println("Refreshing the Tree")
 		MainTree.Refresh()
-	}
-}
-
-func createShareConfigScreen(shareMapping utils.ShareMapping) func(fyne.Window, func(utils.ShareMapping)) fyne.CanvasObject {
-	return func(_ fyne.Window, addPane func(utils.ShareMapping)) fyne.CanvasObject {
-		// return container.NewCenter(container.NewVBox(
-		// 	widget.NewLabelWithStyle("Welcome to the test facility", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		// ))
-
-		return container.NewCenter(container.NewVBox(
-			widget.NewLabel("Share Map Configuration"),
-			widget.NewLabel(fmt.Sprintf("%s -> %s:", shareMapping.SharePath, shareMapping.MountLocation)),
-		))
 	}
 }
 
@@ -82,7 +69,7 @@ func addShareScreen(win fyne.Window, addPane func(utils.ShareMapping)) fyne.Canv
 			return
 		}
 
-		shareMapping := utils.SaveShareMapping(sharePath.Text, roUser.Text, roPass.Text, rwUser.Text, rwPass.Text, mountLocation.Text)
+		shareMapping := utils.SaveShareMappingAndPasswords(sharePath.Text, roUser.Text, roPass.Text, rwUser.Text, rwPass.Text, mountLocation.Text)
 		addPane(shareMapping)
 
 		sharePath.SetText("")

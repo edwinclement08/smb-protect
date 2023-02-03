@@ -6,6 +6,11 @@ import (
 	"os/exec"
 )
 
+type ConnectionState struct {
+	Connected bool
+	Writable  bool
+}
+
 func DisconnectShare(driveLetter string) string {
 	cmd := exec.Command("C:/Windows/System32/net", "use", fmt.Sprintf("%s:", driveLetter), "/delete", "/y")
 
@@ -26,7 +31,10 @@ func DisconnectShare(driveLetter string) string {
 	return out.String()
 }
 
-func CheckConnectedState(driveLetter string) bool {
+func CheckConnectedState(driveLetter string) ConnectionState {
+	var connectionState ConnectionState
+	connectionState.Writable = IsWritable(fmt.Sprintf("%s:\\", driveLetter))
+
 	cmd := exec.Command("C:/Windows/System32/net", "use", fmt.Sprintf("%s:", driveLetter))
 
 	var out bytes.Buffer
@@ -40,11 +48,12 @@ func CheckConnectedState(driveLetter string) bool {
 		fmt.Printf("error")
 		fmt.Printf("translated phrase: %q\n", out.String())
 		fmt.Printf("translated phrase: %q\n", errorStream.String())
-		return false
+		return connectionState
 	}
 
 	fmt.Printf("no error phrase: %q\n", out.String())
-	return true
+	connectionState.Connected = true
+	return connectionState
 }
 
 func MountShare(driveLetter, sharePath, username, password string) string {

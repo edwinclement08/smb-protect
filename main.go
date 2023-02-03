@@ -19,7 +19,6 @@ func main() {
 	// makeTray(a)
 	// checkConnectedState("X")
 	log.Println("Available Creds")
-	utils.ListCred()
 	log.Println("\n\nInitialize Config")
 	// utils.InitConfig()
 
@@ -40,5 +39,5 @@ func main() {
 	// plainText := utils.Decrypt(cipher, pass, nonce, salt)
 	// fmt.Printf("Decrypted text: %s\n", plainText)
 
-	ui.SetupConfigWindow(w)
+	ui.SetupConfigWindow(a, w)
 }

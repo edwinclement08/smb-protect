@@ -162,15 +162,15 @@ func Base64Encode(byteArray []byte) string {
 	return base64.StdEncoding.EncodeToString(byteArray)
 }
 
-func Base64Decode(str string) ([]byte, bool) {
+func Base64Decode(str string) ([]byte, error) {
 	data, err := base64.StdEncoding.DecodeString(str)
 	if err != nil {
-		return []byte{}, true
+		return []byte{}, err
 	}
-	return data, false
+	return data, nil
 }
 
-func SaveShareMapping(sharePath, roUser, roPass, rwUser, rwPass, mountLocation string) ShareMapping {
+func SaveShareMappingAndPasswords(sharePath, roUser, roPass, rwUser, rwPass, mountLocation string) ShareMapping {
 	masterPass := "pass23"
 	roCipher, roNonce, roSalt := Encrypt(roPass, masterPass)
 	rwCipher, rwNonce, rwSalt := Encrypt(rwPass, masterPass)
@@ -189,15 +189,11 @@ func SaveShareMapping(sharePath, roUser, roPass, rwUser, rwPass, mountLocation s
 	}
 	LoadedConfig.ShareMappings = append(LoadedConfig.ShareMappings, shareMapping)
 
-	roErr := CreateCred(
-		fmt.Sprintf("%s:%s", shareMapping.Uuid, "ro"),
-		roUser, string(roCipher),
-	)
+	roCipherStr := Base64Encode(roCipher)
+	rwCipherStr := Base64Encode(rwCipher)
+	roErr := CreateCred(getLabel(shareMapping.Uuid, readOnlyUser), roUser, roCipherStr)
+	rwErr := CreateCred(getLabel(shareMapping.Uuid, readWriteUser), rwUser, rwCipherStr)
 
-	rwErr := CreateCred(
-		fmt.Sprintf("%s:%s", shareMapping.Uuid, "rw"),
-		rwUser, string(rwCipher),
-	)
 	if roErr != nil || rwErr != nil {
 		fmt.Println("Failed to save credentials")
 	}
@@ -206,4 +202,49 @@ func SaveShareMapping(sharePath, roUser, roPass, rwUser, rwPass, mountLocation s
 		fmt.Println("Error in saving Configuration")
 	}
 	return shareMapping
+}
+
+type UserAccessLevel int
+
+const (
+	readOnlyUser  UserAccessLevel = 1
+	readWriteUser UserAccessLevel = 2
+)
+
+func getLabel(uuid string, userAccessLevel UserAccessLevel) string {
+	access := "rw"
+	if userAccessLevel == readOnlyUser {
+		access = "ro"
+	}
+	label := fmt.Sprintf("%s:%s", uuid, access)
+	return label
+}
+
+func LoadPasswords(shareMapping ShareMapping) (roUser, roPass, rwUser, rwPass string, err error) {
+	masterPass := "pass23"
+	roUser, roPassEnc, err1 := RetrieveCredential(getLabel(shareMapping.Uuid, readOnlyUser))
+	rwUser, rwPassEnc, err2 := RetrieveCredential(getLabel(shareMapping.Uuid, readWriteUser))
+
+	if err1 != nil || err2 != nil {
+		fmt.Println("Failed to retrieve Credentials")
+		return "", "", "", "", CoalesceError(err1, err2)
+	}
+
+	roPassEncByte, err1 := Base64Decode(roPassEnc)
+	roNonce, err4 := Base64Decode(shareMapping.ROCryptoNonce)
+	roSalt, err3 := Base64Decode(shareMapping.ROCryptoSalt)
+
+	rwPassEncByte, err2 := Base64Decode(rwPassEnc)
+	rwNonce, err6 := Base64Decode(shareMapping.RWCryptoNonce)
+	rwSalt, err5 := Base64Decode(shareMapping.RWCryptoSalt)
+	totalErr := CoalesceError(err1, err2, err3, err4, err5, err6)
+	if totalErr != nil {
+		fmt.Println("Failed to base64 decode config")
+		return "", "", "", "", totalErr
+	}
+
+	roPassDecStr := Decrypt(roPassEncByte, masterPass, roNonce, roSalt)
+	rwPassDecStr := Decrypt(rwPassEncByte, masterPass, rwNonce, rwSalt)
+
+	return roUser, roPassDecStr, rwUser, rwPassDecStr, nil
 }

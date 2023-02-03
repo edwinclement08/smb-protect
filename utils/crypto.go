@@ -71,7 +71,6 @@ func Decrypt(cipherText []byte, passwordStr string, nonce, salt []byte) string {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Plaintext: %s\n", plainText)
 	return string(plainText)
 }
 
