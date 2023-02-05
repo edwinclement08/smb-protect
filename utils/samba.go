@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 type ConnectionState struct {
@@ -11,7 +12,7 @@ type ConnectionState struct {
 	Writable  bool
 }
 
-func DisconnectShare(driveLetter string) string {
+func DisconnectShare(driveLetter string) {
 	cmd := exec.Command("C:/Windows/System32/net", "use", fmt.Sprintf("%s:", driveLetter), "/delete", "/y")
 
 	var out bytes.Buffer
@@ -22,19 +23,14 @@ func DisconnectShare(driveLetter string) string {
 	err := cmd.Run()
 
 	if err != nil {
-		fmt.Printf("translated phrase: %q\n", out.String())
-		fmt.Printf("translated phrase: %q\n", errorStream.String())
-		return errorStream.String()
+		if !strings.Contains(errorStream.String(), "The network connection could not be found.") {
+			fmt.Printf("DisconnectShare:UnknownErrorMsg: %q\n", errorStream.String())
+		}
 	}
-
-	fmt.Printf("translated phrase: %q\n", out.String())
-	return out.String()
 }
 
 func CheckConnectedState(driveLetter string) ConnectionState {
 	var connectionState ConnectionState
-	connectionState.Writable = IsWritable(fmt.Sprintf("%s:\\", driveLetter))
-
 	cmd := exec.Command("C:/Windows/System32/net", "use", fmt.Sprintf("%s:", driveLetter))
 
 	var out bytes.Buffer
@@ -45,18 +41,18 @@ func CheckConnectedState(driveLetter string) ConnectionState {
 	err := cmd.Run()
 
 	if err != nil {
-		fmt.Printf("error")
-		fmt.Printf("translated phrase: %q\n", out.String())
-		fmt.Printf("translated phrase: %q\n", errorStream.String())
+		if !strings.Contains(errorStream.String(), "The network connection could not be found.") {
+			fmt.Printf("CheckConnnectedState:UnknownErrorMsg: %q\n", errorStream.String())
+		}
 		return connectionState
 	}
 
-	fmt.Printf("no error phrase: %q\n", out.String())
 	connectionState.Connected = true
+	connectionState.Writable = IsWritable(fmt.Sprintf("%s:\\", driveLetter))
 	return connectionState
 }
 
-func MountShare(driveLetter, sharePath, username, password string) string {
+func MountShare(driveLetter, sharePath, username, password string) {
 	cmd := exec.Command("C:/Windows/System32/net", "use", fmt.Sprintf("%s:", driveLetter), sharePath, fmt.Sprintf("/USER:%s", username), "/persistent:no", fmt.Sprintf("%s", password))
 
 	var out bytes.Buffer
@@ -67,11 +63,12 @@ func MountShare(driveLetter, sharePath, username, password string) string {
 	err := cmd.Run()
 
 	if err != nil {
-		fmt.Printf("translated phrase: %q\n", out.String())
-		fmt.Printf("translated phrase: %q\n", errorStream.String())
-		return errorStream.String()
+		if !strings.Contains(errorStream.String(), "The local device name is already in use.") {
+			fmt.Printf("MountShare:UnknownErrorMsg: %q\n", errorStream.String())
+		}
+		if !strings.Contains(errorStream.String(), "The network name cannot be found.") {
+			fmt.Println("Network is unavailable")
+			// TODO do something here
+		}
 	}
-
-	fmt.Printf("translated phrase: %q\n", out.String())
-	return out.String()
 }

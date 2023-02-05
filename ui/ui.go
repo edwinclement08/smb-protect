@@ -13,7 +13,7 @@ import (
 	"github.com/edwinclement08/smb-protect/utils"
 )
 
-func makeTray(a fyne.App) {
+func MakeTray(a fyne.App) {
 	if desk, ok := a.(desktop.App); ok {
 		h := fyne.NewMenuItem("Hello", func() {})
 		h.Icon = theme.HomeIcon()
@@ -147,9 +147,34 @@ func shortcutFocused(s fyne.Shortcut, w fyne.Window) {
 	}
 }
 
-func SetupConfigWindow(app fyne.App, window fyne.Window) {
-	window.Resize(fyne.Size{Width: 450, Height: 350})
+func setShortcuts(w fyne.Window) {
+	ctrlTab := &desktop.CustomShortcut{KeyName: fyne.KeyTab, Modifier: fyne.KeyModifierControl}
+	ctrlShiftTab := &desktop.CustomShortcut{KeyName: fyne.KeyTab, Modifier: fyne.KeyModifierControl | fyne.KeyModifierShift}
 
+	log.Println("Setting up shortcuts")
+	w.Canvas().AddShortcut(ctrlTab, func(shortcut fyne.Shortcut) {
+		log.Println("We tapped Ctrl+Tab")
+		SetSiblingNode(true)
+	})
+	w.Canvas().AddShortcut(ctrlShiftTab, func(shortcut fyne.Shortcut) {
+		log.Println("We tapped Ctrl+shift+Tab")
+		SetSiblingNode(false)
+	})
+	ctrlSpace := &desktop.CustomShortcut{KeyName: fyne.KeySpace, Modifier: fyne.KeyModifierControl}
+	w.Canvas().AddShortcut(ctrlSpace, func(shortcut fyne.Shortcut) {
+		println("We tapped Ctrl+Space")
+	})
+
+}
+
+func SetupConfigWindow(app fyne.App, window fyne.Window) {
+	window.Resize(fyne.Size{Width: 500, Height: 450})
+
+	var _ fyne.Theme = (*CustomTheme)(nil)
+
+	app.Settings().SetTheme(&CustomTheme{})
+
+	setShortcuts(window)
 	window.SetMainMenu(makeMenu(app, window))
 
 	content := container.NewMax()

@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"image/color"
-	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -36,7 +35,6 @@ func CreateShareConfigScreen(shareMapping utils.ShareMapping) func(fyne.Window, 
 			connectionStatus.Color = grayColor
 			connectionStatus.Text = "Checking"
 			connectionStatus.Refresh()
-			utils.IsWritable(fmt.Sprintf("%s:\\", shareMapping.MountLocation))
 			state := utils.CheckConnectedState(shareMapping.MountLocation)
 
 			if state.Connected {
@@ -73,9 +71,8 @@ func CreateShareConfigScreen(shareMapping utils.ShareMapping) func(fyne.Window, 
 				connectionStatus.Color = grayColor
 				connectionStatus.Text = "Checking"
 				connectionStatus.Refresh()
-				output := utils.MountShare(shareMapping.MountLocation, shareMapping.SharePath, user, pass)
+				utils.MountShare(shareMapping.MountLocation, shareMapping.SharePath, user, pass)
 				updateConnectionStatus()
-				log.Println(output)
 			})
 
 		}
@@ -87,9 +84,8 @@ func CreateShareConfigScreen(shareMapping utils.ShareMapping) func(fyne.Window, 
 			connectionStatus.Color = grayColor
 			connectionStatus.Text = "Checking"
 			connectionStatus.Refresh()
-			output := utils.DisconnectShare(shareMapping.MountLocation)
+			utils.DisconnectShare(shareMapping.MountLocation)
 			updateConnectionStatus()
-			log.Println(output)
 		})
 
 		checkStateButton := widget.NewButton("Check Connection", updateConnectionStatus)
@@ -121,7 +117,6 @@ func CreateShareConfigScreen(shareMapping utils.ShareMapping) func(fyne.Window, 
 					connectROButton.Enable()
 					connectRWButton.Enable()
 					disconnectShareButton.Disable()
-
 				}
 			}
 		}()
@@ -154,18 +149,38 @@ func CreateShareConfigScreen(shareMapping utils.ShareMapping) func(fyne.Window, 
 						),
 					),
 					NewBorderStyle(
-						container.NewVBox(
+						NewExpandedVBoxLayout(
 							NewCustomBoldLabel("Credentials", color.Black, biggerTextSize),
-							container.NewHBox(
+							container.NewGridWithColumns(4,
 								widget.NewLabelWithStyle("Read-Only User ", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 								widget.NewLabel(shareMapping.ROUser),
-							),
-							container.NewHBox(
+								layout.NewSpacer(),
+								widget.NewButton("Update", func() {
+									fmt.Println("Update Read-only User button pressed")
+								}),
+
 								widget.NewLabelWithStyle("Read-Write User", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 								widget.NewLabel(shareMapping.RWUser),
+								layout.NewSpacer(),
+								widget.NewButton("Update", func() {
+									fmt.Println("Update Read-write User button pressed")
+								}),
 							),
 						),
 					),
+					NewBorderStyle(
+						NewExpandedVBoxLayout(
+							NewCustomBoldLabel("Advanced Config", color.Black, biggerTextSize),
+							NewBorderStyle(
+								widget.NewCheck("Automatically Mount at Login", func(b bool) { fmt.Println("Toggle Auto-mount") }),
+								widget.NewRadioGroup([]string{"Read-Only", "Read-Write"}, func(val string) {
+									fmt.Println(val, "is the mode of auto-mount")
+								}),
+							),
+							widget.NewCheck("Open in explorer when mounted manually", func(b bool) { fmt.Println("Toggle Open in Explorer") }),
+						),
+					),
+
 					layout.NewSpacer(),
 					container.NewHBox(layout.NewSpacer(), checkStateButton),
 					layout.NewSpacer(),

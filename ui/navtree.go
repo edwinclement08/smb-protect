@@ -17,15 +17,14 @@ type Tab struct {
 }
 
 var (
-	// Tabs defines the metadata for each tutorial
 	Tabs = map[string]Tab{
 		"addShare": {"Add New Share", addShareScreen},
 	}
 
-	// TabIndex defines how our tutorials should be laid out in the index tree
 	TabIndex = map[string][]string{
 		"": {"addShare"},
 	}
+	CurTab = "addShare"
 )
 
 func AddPane(shareMapping utils.ShareMapping) {
@@ -35,7 +34,6 @@ func AddPane(shareMapping utils.ShareMapping) {
 	}
 	TabIndex[""] = append(TabIndex[""], shareMapping.Uuid)
 	if MainTree != nil {
-		fmt.Println("Refreshing the Tree")
 		MainTree.Refresh()
 	}
 }
@@ -97,6 +95,24 @@ func addShareScreen(win fyne.Window, addPane func(utils.ShareMapping)) fyne.Canv
 	)
 }
 
+// Forward: true means next, false is previous
+func SetSiblingNode(moveForward bool) {
+	array := utils.FlattenTree(TabIndex, "")
+	length := len(array)
+	location := utils.IndexOf(CurTab, array)
+
+	delta := -1
+	if moveForward {
+		delta = 1
+	}
+	newLoc := (location + delta) % length
+	if newLoc < 0 {
+		newLoc = length + newLoc
+	}
+	newTab := array[newLoc]
+	MainTree.Select(newTab)
+}
+
 func makeNav(setContent func(tab Tab, addPane func(utils.ShareMapping))) *widget.Tree {
 	tree := widget.NewTree(
 		func(uid string) []string { // ChildUIDs
@@ -121,6 +137,7 @@ func makeNav(setContent func(tab Tab, addPane func(utils.ShareMapping))) *widget
 		},
 	)
 	tree.OnSelected = func(uid string) {
+		CurTab = uid
 		if t, ok := Tabs[uid]; ok {
 			setContent(t, AddPane)
 		}
