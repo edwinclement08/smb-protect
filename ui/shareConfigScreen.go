@@ -124,7 +124,7 @@ func CreateShareConfigScreen(shareMapping utils.ShareMapping) func(fyne.Window, 
 		return NewBorderStyle(
 			container.NewVBox(
 				container.NewHBox(
-					NewCustomBoldLabel("Share Map Configuration", color.Black, theme.TextSubHeadingSize()),
+					NewCustomBoldLabel("Share Map Configuration", theme.ForegroundColor(), theme.TextSubHeadingSize()),
 					layout.NewSpacer(),
 					connectionStatus,
 				),
@@ -136,7 +136,7 @@ func CreateShareConfigScreen(shareMapping utils.ShareMapping) func(fyne.Window, 
 								&canvas.Text{
 									Text:     shareMapping.SharePath,
 									TextSize: biggerTextSize,
-									Color:    color.Black,
+									Color:    theme.ForegroundColor(),
 								},
 							),
 						),
@@ -150,7 +150,7 @@ func CreateShareConfigScreen(shareMapping utils.ShareMapping) func(fyne.Window, 
 					),
 					NewBorderStyle(
 						NewExpandedVBoxLayout(
-							NewCustomBoldLabel("Credentials", color.Black, biggerTextSize),
+							NewCustomBoldLabel("Credentials", theme.ForegroundColor(), biggerTextSize),
 							container.NewGridWithColumns(4,
 								widget.NewLabelWithStyle("Read-Only User ", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 								widget.NewLabel(shareMapping.ROUser),
@@ -170,12 +170,16 @@ func CreateShareConfigScreen(shareMapping utils.ShareMapping) func(fyne.Window, 
 					),
 					NewBorderStyle(
 						NewExpandedVBoxLayout(
-							NewCustomBoldLabel("Advanced Config", color.Black, biggerTextSize),
+							NewCustomBoldLabel("Advanced Config", theme.ForegroundColor(), biggerTextSize),
 							NewBorderStyle(
-								widget.NewCheck("Automatically Mount at Login", func(b bool) { fmt.Println("Toggle Auto-mount") }),
-								widget.NewRadioGroup([]string{"Read-Only", "Read-Write"}, func(val string) {
-									fmt.Println(val, "is the mode of auto-mount")
-								}),
+								NewVSplitLayout(
+									widget.NewRadioGroup([]string{"Read-Only", "Read-Write"}, func(val string) {
+										fmt.Println(val, "is the mode of auto-mount")
+									}),
+									container.NewVBox(
+										widget.NewCheck("Automatically Mount at Login", func(b bool) { fmt.Println("Toggle Auto-mount") }),
+									),
+								),
 							),
 							widget.NewCheck("Open in explorer when mounted manually", func(b bool) { fmt.Println("Toggle Open in Explorer") }),
 						),

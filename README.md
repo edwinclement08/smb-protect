@@ -22,3 +22,7 @@ As you usually don't edit the files on the drives, there is no need for writing 
 
 When you do need to update files, you can click a button on the systray to re-map the drive as 
 a writable mount. When you are done with your work, you can switch it back to Read-only
+
+
+# Need this fix to worko
+https://github.com/edwinclement08/fyne/commit/d9a4b9948d92f261a48c2ab979fb6ee6200fd393

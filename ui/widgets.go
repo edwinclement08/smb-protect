@@ -6,12 +6,13 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 )
 
 func NewBorderStyle(objects ...fyne.CanvasObject) fyne.CanvasObject {
 	return container.NewPadded(
 		container.NewMax(
-			&canvas.Rectangle{StrokeColor: color.Black, StrokeWidth: 1},
+			&canvas.Rectangle{StrokeColor: theme.ForegroundColor(), StrokeWidth: 1},
 			container.NewPadded(objects...)))
 }
 
