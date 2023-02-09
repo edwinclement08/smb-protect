@@ -24,6 +24,7 @@ func main() {
 		ui.AddPane(share)
 	}
 
-	// ui.MakeTray(a)
+	go utils.StateUpdateLoop()
+	ui.MakeTray(a, w)
 	ui.SetupConfigWindow(a, w)
 }
