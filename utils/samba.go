@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"syscall"
 )
 
 type ConnectionState struct {
@@ -17,6 +18,8 @@ func DisconnectShare(driveLetter string) {
 
 	var out bytes.Buffer
 	var errorStream bytes.Buffer
+	cmd.Stdin = strings.NewReader("")
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmd.Stdout = &out
 	cmd.Stderr = &errorStream
 
@@ -35,7 +38,9 @@ func CheckConnectedState(driveLetter string) ConnectionState {
 
 	var out bytes.Buffer
 	var errorStream bytes.Buffer
+	cmd.Stdin = strings.NewReader("")
 	cmd.Stdout = &out
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmd.Stderr = &errorStream
 
 	err := cmd.Run()
@@ -57,9 +62,10 @@ func MountShare(driveLetter, sharePath, username, password string) {
 
 	var out bytes.Buffer
 	var errorStream bytes.Buffer
+	cmd.Stdin = strings.NewReader("")
 	cmd.Stdout = &out
 	cmd.Stderr = &errorStream
-
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	err := cmd.Run()
 
 	if err != nil {
