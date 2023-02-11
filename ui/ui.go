@@ -9,7 +9,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
-	"github.com/danieljoos/wincred"
 	"github.com/edwinclement08/smb-protect/utils"
 )
 
@@ -83,27 +82,28 @@ func makeMenu(a fyne.App, w fyne.Window) *fyne.MainMenu {
 			_ = a.OpenURL(u)
 		}))
 
-	// a quit item will be appended to our first (File) menu
-	deleteCreds := fyne.NewMenuItem("Delete Creds", func() {
-		fmt.Println("LIst of all creds")
-		creds, err := utils.ListCreds()
-		if err != nil {
-			fmt.Println("Error in listing creds:", err)
-			return
-		}
-		for _, cred := range creds {
-			target := cred.TargetName
-			genCred, err := wincred.GetGenericCredential(target)
-			if err == nil {
-				genCred.Delete()
-			}
-		}
-		utils.LoadedConfig.ShareMappings = []utils.ShareMapping{}
-		utils.SaveConfig()
-		// TODO need to update UI
-	})
+	// // a quit item will be appended to our first (File) menu
+	// deleteCreds := fyne.NewMenuItem("Delete Creds", func() {
+	// 	fmt.Println("LIst of all creds")
+	// 	creds, err := utils.ListCreds()
+	// 	if err != nil {
+	// 		fmt.Println("Error in listing creds:", err)
+	// 		return
+	// 	}
+	// 	for _, cred := range creds {
+	// 		target := cred.TargetName
+	// 		genCred, err := wincred.GetGenericCredential(target)
+	// 		if err == nil {
+	// 			genCred.Delete()
+	// 		}
+	// 	}
+	// 	utils.LoadedConfig.ShareMappings = []utils.ShareMapping{}
+	// 	utils.SaveConfig()
+	// 	// TODO need to update UI
+	// })
 
-	file := fyne.NewMenu("File", newItem, checkedItem, disabledItem, deleteCreds)
+	file := fyne.NewMenu("File", newItem, checkedItem, disabledItem) // , deleteCreds
+
 	device := fyne.CurrentDevice()
 	if !device.IsMobile() && !device.IsBrowser() {
 		file.Items = append(file.Items, fyne.NewMenuItemSeparator(), settingsItem)
